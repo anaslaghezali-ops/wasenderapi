@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Envoi WhatsApp</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
+<style>
+:root{--bg:#f4f5f2;--card:#fff;--text:#1c1f1a;--muted:#6b7166;--line:#e2e5de;--accent:#1f8a4c;--accent-ink:#fff;--accent-soft:#e5f3ea;--danger:#c0392b;--warn-bg:#fff5d6;--warn-ink:#7a5b00;--bubble:#dcf7c5;--r:12px}
+@media (prefers-color-scheme:dark){:root{--bg:#121411;--card:#1b1e1a;--text:#e8ebe5;--muted:#9aa094;--line:#2c312a;--accent:#3fbf73;--accent-ink:#08130c;--accent-soft:#1f3326;--danger:#ff6b5b;--warn-bg:#3a2f0c;--warn-ink:#f2d27a;--bubble:#1f3a28}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+[hidden]{display:none!important}
+h1{font-size:22px;margin:0}
+h2{font-size:17px;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+code{background:var(--accent-soft);padding:1px 5px;border-radius:5px;font-size:.92em}
+.muted{color:var(--muted);margin:0 0 12px}
+.sm{font-size:13px}
+.error{color:var(--danger)}
+.ok{color:var(--accent)}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;background:var(--card);border-bottom:1px solid var(--line)}
+main{max-width:760px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.step{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:13px}
+input,textarea,select{width:100%;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+textarea{resize:vertical}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+button{font:inherit;cursor:pointer;border-radius:8px;padding:9px 14px;border:1px solid var(--line);background:var(--card);color:var(--text)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.small{padding:5px 10px;font-size:13px}
+.big{width:100%;padding:13px;margin-top:10px;font-size:16px}
+.danger{color:var(--danger)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row>input{flex:1;min-width:180px}
+.between{justify-content:space-between}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.grid label{font-size:13px;color:var(--muted);display:grid;gap:4px}
+.file input{display:none}
+.file span{display:inline-block;padding:10px 16px;border:1px dashed var(--accent);border-radius:8px;color:var(--accent);cursor:pointer;font-weight:600}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--muted);margin-bottom:8px}
+details textarea{margin-bottom:8px}
+.info{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--accent-soft);font-size:14px}
+.warn{color:var(--warn-ink)}
+.alert{margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--warn-bg);color:var(--warn-ink);font-size:14px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip{font-size:13px;padding:3px 10px;border-radius:99px;border:1px solid var(--accent);color:var(--accent);background:transparent}
+.preview{margin-top:12px;display:grid;gap:8px}
+.bubble{background:var(--bubble);border-radius:10px 10px 10px 2px;padding:8px 11px;white-space:pre-wrap;word-break:break-word;max-width:90%}
+.bubble .to{display:block;font-size:12px;color:var(--muted);margin-bottom:2px}
+.badge{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--line)}
+.badge.running{background:var(--accent);color:var(--accent-ink)}
+.badge.paused{background:var(--warn-bg);color:var(--warn-ink)}
+.badge.done{background:var(--accent-soft);color:var(--accent)}
+.progress{height:10px;background:var(--line);border-radius:99px;overflow:hidden;margin:12px 0 6px;display:flex}
+.progress .s{background:var(--accent)}
+.progress .f{background:var(--danger)}
+.counts{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.counts b{color:var(--text)}
+.table-wrap{overflow:auto;max-height:50vh;margin-top:12px;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{position:sticky;top:0;background:var(--card)}
+td.err{color:var(--danger)}
+td.msg{white-space:pre-wrap;max-width:320px}
+@media (max-width:520px){main{padding:12px}.card{padding:14px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Envoi WhatsApp</h1>
+  <span id="keyState" class="sm muted"></span>
+</header>
+
+<main>
+  <!-- Clé API -->
+  <div class="card" id="keyCard">
+    <h2><span class="step">0</span> Clé API WasenderAPI</h2>
+    <p class="muted">Tableau de bord WasenderAPI → votre session → <i>API Key</i>. Elle reste uniquement dans ce navigateur, elle n’est envoyée qu’à WasenderAPI.</p>
+    <div class="row">
+      <input id="apiKey" type="password" placeholder="Collez la clé API ici" autocomplete="off">
+      <button id="saveKey" class="primary" type="button">Enregistrer</button>
+    </div>
+    <p id="keyMsg" class="sm"></p>
+  </div>
+
+  <!-- Campagne en cours -->
+  <div class="card" id="runCard" hidden>
+    <div class="row between">
+      <h2 id="runTitle">Campagne</h2>
+      <span id="runBadge" class="badge"></span>
+    </div>
+    <div class="progress"><div class="s" id="pS"></div><div class="f" id="pF"></div></div>
+    <div class="counts">
+      <span><b id="cS">0</b> envoyés</span>
+      <span><b id="cF">0</b> échecs</span>
+      <span><b id="cP">0</b> en attente</span>
+      <span id="cNext"></span>
+    </div>
+    <div id="runAlert" class="alert" hidden></div>
+    <p class="sm muted" style="margin-top:10px">⚠️ Gardez cet onglet <b>ouvert et visible</b> et le PC allumé pendant l’envoi. Si vous fermez la page, la campagne reprend où elle s’était arrêtée quand vous revenez.</p>
+    <div class="row">
+      <button id="bResume" class="primary small">Reprendre</button>
+      <button id="bPause" class="small">Pause</button>
+      <button id="bRetry" class="small">Relancer les échecs</button>
+      <button id="bExport" class="small">Exporter CSV</button>
+      <button id="bDetail" class="small">Détail</button>
+      <button id="bNew" class="small danger">Nouvelle campagne</button>
+    </div>
+    <div id="detailBox" class="table-wrap" hidden><table id="detailTable"></table></div>
+  </div>
+
+  <!-- Nouvelle campagne -->
+  <div id="newBox">
+    <div class="card">
+      <h2><span class="step">1</span> Contacts</h2>
+      <p class="muted">Fichier Excel ou CSV avec une colonne de numéros (<code>telephone</code>…) et d’autres colonnes si vous voulez (<code>prenom</code>, <code>ville</code>…). Les <code>06…</code>/<code>07…</code> deviennent <code>+212…</code>.</p>
+      <label class="file"><input id="file" type="file" accept=".xlsx,.xls,.csv,.txt"><span>Choisir un fichier</span></label>
+      <details>
+        <summary>…ou coller une liste</summary>
+        <textarea id="paste" rows="5" placeholder="Un numéro par ligne, éventuellement suivi du prénom :&#10;0612345678;Karim&#10;+212 6 98 76 54 32;Salma"></textarea>
+        <button id="usePaste" class="small" type="button">Utiliser cette liste</button>
+      </details>
+      <div id="contactsInfo" class="info" hidden></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step">2</span> Message</h2>
+      <div id="chips" class="chips"></div>
+      <textarea id="template" rows="7" placeholder="{Salut|Bonjour} {prenom} 👋&#10;&#10;Votre message ici…"></textarea>
+      <div class="row between muted sm"><span>Variables : <code>{prenom}</code> · Variantes au hasard : <code>{Salut|Bonjour|Hello}</code></span><span id="chars">0 / 4000</span></div>
+      <div id="previewBox" class="preview" hidden></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step">3</span> Rythme d’envoi</h2>
+      <p class="muted">Lent et irrégulier = moins de risque de blocage du numéro.</p>
+      <div class="grid">
+        <label>Pause min entre messages (s)<input id="minDelay" type="number" min="1" value="10"></label>
+        <label>Pause max entre messages (s)<input id="maxDelay" type="number" min="1" value="25"></label>
+        <label>Grande pause tous les… messages<input id="batchSize" type="number" min="0" value="40"></label>
+        <label>Durée grande pause (min)<input id="batchPause" type="number" min="0" value="5"></label>
+      </div>
+      <p id="estimate" class="muted sm" style="margin-top:10px"></p>
+    </div>
+
+    <div class="card">
+      <h2><span class="step">4</span> Test</h2>
+      <p class="muted">Envoyez-vous le message (avec les infos du 1er contact). Ce test vérifie aussi que la page peut parler à WasenderAPI.</p>
+      <div class="row">
+        <input id="testPhone" type="tel" placeholder="Votre numéro, ex : 0612345678">
+        <button id="sendTest" type="button">Envoyer le test</button>
+      </div>
+      <p id="testMsg" class="sm"></p>
+    </div>
+
+    <div class="card">
+      <h2><span class="step">5</span> Lancer</h2>
+      <input id="campName" type="text" placeholder="Nom de la campagne (optionnel)">
+      <button id="launch" class="primary big" type="button" disabled>Lancer la campagne</button>
+    </div>
+  </div>
+</main>
+
+<script>
+// ================== Utilitaires ==================
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+const API = 'https://www.wasenderapi.com/api/send-message';
+const LS_KEY = 'wsb_api_key', LS_CAMP = 'wsb_campaign';
+
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } },
+  del(k) { try { localStorage.removeItem(k); } catch {} },
+};
+
+function normalizePhone(raw) {
+  let s = String(raw ?? '').trim();
+  if (!s) return null;
+  if (/^\d+(\.\d+)?e\+?\d+$/i.test(s)) s = Number(s).toFixed(0);
+  const plus = s.startsWith('+');
+  let d = s.replace(/\D/g, '');
+  if (!d) return null;
+  if (plus) {}
+  else if (d.startsWith('00')) d = d.slice(2);
+  else if (d.startsWith('212')) {}
+  else if (d.startsWith('0')) d = '212' + d.slice(1);
+  else if (d.length === 9) d = '212' + d;
+  else return null;
+  if (d.startsWith('212') && d.length !== 12) return null;
+  if (d.length < 8 || d.length > 15) return null;
+  return '+' + d;
+}
+
+const normKey = (k) => String(k).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '_');
+
+function render(template, fields) {
+  const f = {};
+  for (const [k, v] of Object.entries(fields || {})) f[normKey(k)] = String(v ?? '').trim();
+  let t = String(template).replace(/\{\s*([^{}|]+?)\s*\}/g, (m, k) => f[normKey(k)] ?? '');
+  const re = /\{([^{}]*\|[^{}]*)\}/;
+  for (let i = 0; re.test(t) && i < 200; i++) t = t.replace(re, (m, inner) => { const o = inner.split('|'); return o[Math.floor(Math.random() * o.length)]; });
+  return t.replace(/[ \t]{2,}/g, ' ').replace(/ ([,.])/g, '$1').trim();
+}
+const varsIn = (t) => [...new Set([...String(t).matchAll(/\{\s*([^{}|]+?)\s*\}/g)].map((m) => normKey(m[1])))];
+
+function fmtDur(sec) {
+  sec = Math.round(sec);
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+  return h ? `${h} h ${String(m).padStart(2, '0')}` : m ? `${m} min` : `${sec} s`;
+}
+const randInt = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
+
+// ================== Envoi WasenderAPI ==================
+async function sendText(to, text) {
+  const key = store.get(LS_KEY);
+  if (!key) throw Object.assign(new Error('Clé API manquante (étape 0).'), { fatal: true });
+  let res;
+  try {
+    res = await fetch(API, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ to, text }),
+    });
+  } catch (e) {
+    // fetch échoue sans réponse : pas d'internet, ou appel bloqué par le navigateur (CORS)
+    throw Object.assign(new Error(navigator.onLine
+      ? 'Appel bloqué par le navigateur : WasenderAPI n’accepte peut-être pas les appels directs depuis une page web (CORS). Dans ce cas il faudra passer par le petit serveur.'
+      : 'Pas de connexion internet.'), { network: true });
+  }
+  let body = null;
+  try { body = await res.json(); } catch {}
+  if (res.ok && (!body || body.success !== false)) return body?.data || {};
+  const msg = body?.message || body?.error || (body?.errors ? JSON.stringify(body.errors) : '') || 'HTTP ' + res.status;
+  if (res.status === 429) {
+    const h = Number(res.headers.get('retry-after')), b = Number(body?.retry_after ?? body?.retryAfter);
+    throw Object.assign(new Error('Limite de débit (429)'), { status: 429, retryAfter: h > 0 ? h : b > 0 ? b : 60 });
+  }
+  if (res.status === 401 || res.status === 403)
+    throw Object.assign(new Error(`Accès refusé (${res.status}) : clé API invalide ou session WhatsApp déconnectée. ${msg}`), { status: res.status, fatal: true });
+  throw Object.assign(new Error(msg), { status: res.status });
+}
+
+// ================== Clé API ==================
+function refreshKey() {
+  const has = !!store.get(LS_KEY);
+  $('keyState').innerHTML = has ? '<span class="ok">● Clé enregistrée</span> · <a href="#" id="changeKey">changer</a>' : '<span class="error">● Pas de clé</span>';
+  $('keyCard').hidden = has;
+  const ck = $('changeKey');
+  if (ck) ck.onclick = (e) => { e.preventDefault(); $('keyCard').hidden = false; $('apiKey').focus(); };
+}
+$('saveKey').onclick = () => {
+  const k = $('apiKey').value.trim();
+  if (!k) return ($('keyMsg').textContent = 'Collez une clé.');
+  if (!store.set(LS_KEY, k)) return ($('keyMsg').textContent = 'Impossible d’enregistrer (navigation privée ?).');
+  $('apiKey').value = '';
+  $('keyMsg').textContent = '';
+  refreshKey();
+};
+
+// ================== Contacts ==================
+let contacts = [], columns = [], validCount = 0;
+const PHONE_HEADER = /^(tel|telephone|phone|numero|num|n°|no|mobile|gsm|whatsapp|portable|contact)/;
+
+function rowsToContacts(rows) {
+  rows = rows.filter((r) => r && r.some((c) => String(c ?? '').trim() !== ''));
+  if (!rows.length) return { list: [], cols: [] };
+  const first = rows[0].map((c) => String(c ?? '').trim());
+  const header = !first.some((c) => normalizePhone(c));
+  const headers = header ? first.map((h, i) => normKey(h) || 'colonne_' + (i + 1)) : first.map((_, i) => (i === 0 ? 'telephone' : i === 1 ? 'prenom' : 'colonne_' + (i + 1)));
+  const data = header ? rows.slice(1) : rows;
+  let pi = headers.findIndex((h) => PHONE_HEADER.test(h));
+  if (pi < 0) { let best = 0; headers.forEach((_, i) => { const n = data.filter((r) => normalizePhone(r[i])).length; if (n > best) { best = n; pi = i; } }); }
+  if (pi < 0) return { list: [], cols: [] };
+  const cols = headers.filter((_, i) => i !== pi);
+  const list = data.map((r) => { const o = { phone: String(r[pi] ?? '').trim() }; headers.forEach((h, i) => { if (i !== pi) o[h] = String(r[i] ?? '').trim(); }); return o; });
+  return { list, cols };
+}
+
+function uniqueValid(list) {
+  const seen = new Set(), out = [];
+  for (const c of list) { const p = normalizePhone(c.phone); if (p && !seen.has(p)) { seen.add(p); out.push({ ...c, phone: p }); } }
+  return out;
+}
+
+function setContacts(list, cols, source) {
+  contacts = list; columns = cols;
+  const valid = uniqueValid(list);
+  validCount = valid.length;
+  const invalid = list.filter((c) => !normalizePhone(c.phone));
+  const dup = list.length - invalid.length - valid.length;
+  $('contactsInfo').hidden = false;
+  $('contactsInfo').innerHTML =
+    `<b>${validCount}</b> numéro(s) valide(s) depuis ${esc(source)}` +
+    (dup ? ` · ${dup} doublon(s) ignoré(s)` : '') +
+    (invalid.length ? `<br><span class="warn">${invalid.length} invalide(s) ignoré(s), ex : ${invalid.slice(0, 5).map((c) => esc(c.phone || '(vide)')).join(', ')}</span>` : '') +
+    (cols.length ? `<br>Colonnes : ${cols.map((c) => `<code>{${esc(c)}}</code>`).join(' ')}` : '') +
+    (!validCount ? '<br><span class="warn">Aucun numéro valide trouvé.</span>' : '');
+  chips(); preview(); estimate(); canLaunch();
+}
+
+$('file').onchange = async (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try {
+    if (!window.XLSX) throw new Error('lecteur Excel non chargé (connexion ?)');
+    const wb = XLSX.read(await f.arrayBuffer(), { type: 'array', raw: false });
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, defval: '' });
+    const { list, cols } = rowsToContacts(rows);
+    setContacts(list, cols, f.name);
+  } catch (err) {
+    $('contactsInfo').hidden = false;
+    $('contactsInfo').innerHTML = `<span class="warn">Impossible de lire le fichier : ${esc(err.message)}</span>`;
+  }
+};
+$('usePaste').onclick = () => {
+  const rows = $('paste').value.split(/\r?\n/).map((l) => l.split(/[;\t,]/).map((x) => x.trim()));
+  const { list, cols } = rowsToContacts(rows);
+  setContacts(list, cols, 'la liste collée');
+};
+
+// ================== Message ==================
+function chips() {
+  const v = columns.length ? columns : ['prenom'];
+  $('chips').innerHTML = v.map((x) => `<button type="button" class="chip" data-ins="{${esc(x)}}">+ {${esc(x)}}</button>`).join('') +
+    '<button type="button" class="chip" data-ins="{Salut|Bonjour|Hello}">+ variantes</button>';
+}
+$('chips').onclick = (e) => {
+  const ins = e.target.dataset?.ins; if (!ins) return;
+  const t = $('template'), a = t.selectionStart ?? t.value.length;
+  t.value = t.value.slice(0, a) + ins + t.value.slice(t.selectionEnd ?? a);
+  t.focus(); t.selectionStart = t.selectionEnd = a + ins.length;
+  onTpl();
+};
+function onTpl() { $('chars').textContent = `${$('template').value.length} / 4000`; preview(); canLaunch(); }
+$('template').oninput = onTpl;
+
+function preview() {
+  const t = $('template').value;
+  if (!t.trim()) return ($('previewBox').hidden = true);
+  const sample = uniqueValid(contacts).slice(0, 3);
+  const missing = contacts.length ? varsIn(t).filter((v) => !columns.includes(v)) : [];
+  $('previewBox').innerHTML = '<div class="muted sm">Aperçu</div>' +
+    (missing.length ? `<div class="error sm">Colonne(s) absente(s) du fichier : ${missing.map((m) => `{${esc(m)}}`).join(', ')} (remplacée par du vide)</div>` : '') +
+    (sample.length ? sample : [{}]).map((c) => `<div class="bubble">${c.phone ? `<span class="to">${esc(c.phone)}</span>` : ''}${esc(render(t, c))}</div>`).join('');
+  $('previewBox').hidden = false;
+}
+
+// ================== Rythme ==================
+function settings() {
+  const n = (id, d, lo) => Math.max(lo, Number($(id).value) || d);
+  const minDelay = n('minDelay', 10, 1);
+  return { minDelay, maxDelay: Math.max(minDelay, n('maxDelay', 25, 1)), batchSize: Math.max(0, Number($('batchSize').value) || 0), batchPause: Math.max(0, Number($('batchPause').value) || 0) };
+}
+function estimate() {
+  const s = settings(), n = validCount;
+  if (!n) return ($('estimate').textContent = '');
+  const big = s.batchSize ? Math.floor((n - 1) / s.batchSize) * s.batchPause * 60 * 1.25 : 0;
+  $('estimate').textContent = `Durée estimée pour ${n} messages : environ ${fmtDur(n * ((s.minDelay + s.maxDelay) / 2 + 1) + big)}. L’onglet doit rester ouvert tout ce temps.`;
+}
+['minDelay', 'maxDelay', 'batchSize', 'batchPause'].forEach((id) => ($(id).oninput = estimate));
+
+// ================== Test ==================
+$('sendTest').onclick = async () => {
+  const m = $('testMsg');
+  const to = normalizePhone($('testPhone').value);
+  if (!to) return (m.className = 'sm error', m.textContent = 'Numéro de test invalide.');
+  if (!$('template').value.trim()) return (m.className = 'sm error', m.textContent = 'Écrivez d’abord le message.');
+  m.className = 'sm'; m.textContent = 'Envoi…'; $('sendTest').disabled = true;
+  try {
+    const first = uniqueValid(contacts)[0] || {};
+    await sendText(to, render($('template').value, first));
+    m.className = 'sm ok'; m.textContent = `Envoyé à ${to}. Vérifiez votre WhatsApp. La connexion à WasenderAPI fonctionne ✔`;
+  } catch (e) {
+    m.className = 'sm error'; m.textContent = e.message;
+  } finally { $('sendTest').disabled = false; }
+};
+
+// ================== Campagne ==================
+let camp = null;       // campagne courante
+let loopRunning = false, wake = null, timer = null, wakeLock = null;
+
+function saveCamp() { if (camp) store.set(LS_CAMP, JSON.stringify(camp)); }
+function loadCamp() { try { camp = JSON.parse(store.get(LS_CAMP)); } catch { camp = null; } if (camp && camp.status === 'running') { camp.status = 'paused'; camp.lastError = 'Page rechargée : cliquez sur « Reprendre » pour continuer.'; } }
+
+function canLaunch() { $('launch').disabled = !(validCount && $('template').value.trim()) || (camp && ['running', 'paused'].includes(camp.status)); }
+
+$('launch').onclick = () => {
+  if (!store.get(LS_KEY)) return alert('Ajoutez d’abord la clé API (étape 0).');
+  if (!confirm(`Envoyer ce message à ${validCount} contact(s) ?\n\nGardez cet onglet ouvert pendant l’envoi.`)) return;
+  camp = {
+    name: $('campName').value.trim() || 'Campagne du ' + new Date().toLocaleString('fr-FR'),
+    template: $('template').value,
+    settings: settings(),
+    contacts: uniqueValid(contacts).map(({ phone, ...fields }) => ({ phone, fields, status: 'pending', error: null, sentAt: null, text: null })),
+    status: 'paused', lastError: null, nextAt: null, sentRun: 0,
+  };
+  saveCamp();
+  start();
+};
+
+const STATUS = { running: 'En cours', paused: 'En pause', done: 'Terminée' };
+function stats() { const s = { sent: 0, failed: 0, pending: 0 }; camp.contacts.forEach((c) => s[c.status]++); return s; }
+
+function ui() {
+  $('runCard').hidden = !camp;
+  $('newBox').hidden = !!camp && camp.status !== 'done';
+  canLaunch();
+  if (!camp) return;
+  const s = stats(), n = camp.contacts.length;
+  $('runTitle').textContent = camp.name;
+  $('runBadge').textContent = STATUS[camp.status]; $('runBadge').className = 'badge ' + camp.status;
+  $('pS').style.width = (s.sent / n) * 100 + '%'; $('pF').style.width = (s.failed / n) * 100 + '%';
+  $('cS').textContent = s.sent; $('cF').textContent = s.failed; $('cP').textContent = s.pending;
+  $('cNext').textContent = `sur ${n}` + (camp.status === 'running' && camp.nextAt ? ` · prochain envoi dans ${fmtDur(Math.max(0, (camp.nextAt - Date.now()) / 1000))}` : '');
+  $('runAlert').hidden = !camp.lastError; $('runAlert').textContent = camp.lastError || '';
+  $('bResume').hidden = camp.status !== 'paused' || !s.pending;
+  $('bPause').hidden = camp.status !== 'running';
+  $('bRetry').hidden = camp.status === 'running' || !s.failed;
+  $('bNew').hidden = camp.status === 'running';
+  if (!$('detailBox').hidden) detail();
+}
+setInterval(() => camp && camp.status === 'running' && ui(), 1000);
+
+function sleep(ms) {
+  return new Promise((r) => { timer = setTimeout(done, ms); wake = done; function done() { clearTimeout(timer); wake = null; r(); } });
+}
+
+async function keepAwake(on) {
+  try {
+    if (on && 'wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.onrelease = () => (wakeLock = null); }
+    if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch {}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && camp?.status === 'running') keepAwake(true); });
+window.addEventListener('beforeunload', (e) => { if (camp?.status === 'running') { e.preventDefault(); e.returnValue = ''; } });
+
+function start() {
+  if (loopRunning) return;
+  camp.status = 'running'; camp.lastError = null; saveCamp(); ui();
+  keepAwake(true);
+  loop().finally(() => { loopRunning = false; camp.nextAt = null; keepAwake(false); saveCamp(); ui(); });
+}
+
+async function loop() {
+  loopRunning = true;
+  let fails = 0;
+  const live = () => camp && camp.status === 'running';
+  while (live()) {
+    const c = camp.contacts.find((x) => x.status === 'pending');
+    if (!c) { camp.status = 'done'; break; }
+    const text = render(camp.template, c.fields);
+    let tries = 0, outcome = null;
+    while (live() && !outcome) {
+      try {
+        await sendText(c.phone, text);
+        Object.assign(c, { status: 'sent', sentAt: new Date().toISOString(), text, error: null });
+        outcome = 'sent';
+      } catch (e) {
+        if (e.status === 429) {
+          camp.lastError = `Limite de débit atteinte, reprise dans ${e.retryAfter} s.`;
+          camp.nextAt = Date.now() + e.retryAfter * 1000; saveCamp(); ui();
+          await sleep(e.retryAfter * 1000); camp.lastError = null; continue;
+        }
+        if (e.fatal || (e.network && tries >= 3)) { camp.status = 'paused'; camp.lastError = e.message; outcome = 'stop'; break; }
+        if (e.network || !e.status || e.status >= 500) {
+          tries++; camp.lastError = `Erreur temporaire (${e.message}). Nouvel essai ${tries}/3 dans 30 s.`;
+          camp.nextAt = Date.now() + 30000; saveCamp(); ui(); await sleep(30000); continue;
+        }
+        Object.assign(c, { status: 'failed', error: e.message, text }); outcome = 'failed';
+      }
+    }
+    if (outcome === 'sent') { fails = 0; camp.sentRun++; camp.lastError = null; }
+    if (outcome === 'failed' && ++fails >= 5) { camp.status = 'paused'; camp.lastError = `5 échecs d’affilée : pause de sécurité. Vérifiez que la session WhatsApp est connectée dans WasenderAPI. Dernière erreur : ${c.error}`; }
+    saveCamp(); ui();
+    if (!live() || !camp.contacts.some((x) => x.status === 'pending')) continue;
+    const s = camp.settings;
+    let ms = randInt(s.minDelay * 1000, s.maxDelay * 1000);
+    if (outcome === 'sent' && s.batchSize && s.batchPause && camp.sentRun % s.batchSize === 0) ms = randInt(s.batchPause * 60000, s.batchPause * 90000);
+    camp.nextAt = Date.now() + ms; saveCamp(); ui();
+    await sleep(ms);
+  }
+}
+
+$('bResume').onclick = () => start();
+$('bPause').onclick = () => { camp.status = 'paused'; camp.nextAt = null; if (wake) wake(); saveCamp(); ui(); };
+$('bRetry').onclick = () => { camp.contacts.forEach((c) => { if (c.status === 'failed') Object.assign(c, { status: 'pending', error: null }); }); camp.status = 'paused'; camp.lastError = null; saveCamp(); ui(); };
+$('bNew').onclick = () => {
+  const s = stats();
+  if (s.pending && !confirm(`Il reste ${s.pending} message(s) non envoyé(s). Abandonner cette campagne ?`)) return;
+  if (!s.pending && !confirm('Effacer cette campagne ? Pensez à exporter le CSV avant.')) return;
+  camp = null; store.del(LS_CAMP); $('detailBox').hidden = true; ui();
+};
+$('bExport').onclick = () => {
+  const q = (v) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const keys = [...new Set(camp.contacts.flatMap((c) => Object.keys(c.fields)))];
+  const lines = [['telephone', ...keys, 'statut', 'envoye_le', 'erreur', 'message'].map(q).join(','),
+    ...camp.contacts.map((c) => [c.phone, ...keys.map((k) => c.fields[k]), c.status, c.sentAt, c.error, c.text].map(q).join(','))];
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+  a.download = camp.name.replace(/[^\w\- ]+/g, '_') + '.csv';
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('bDetail').onclick = () => { $('detailBox').hidden = !$('detailBox').hidden; if (!$('detailBox').hidden) detail(); };
+function detail() {
+  const L = { sent: 'Envoyé', failed: 'Échec', pending: 'En attente' };
+  $('detailTable').innerHTML = '<tr><th>Numéro</th><th>Statut</th><th>Heure</th><th>Message / erreur</th></tr>' +
+    camp.contacts.slice(0, 1000).map((c) => `<tr><td>${esc(c.phone)}</td><td>${L[c.status]}</td><td>${c.sentAt ? new Date(c.sentAt).toLocaleTimeString('fr-FR') : ''}</td><td class="${c.error ? 'err' : 'msg'}">${esc(c.error || c.text || '')}</td></tr>`).join('');
+}
+
+// ================== Démarrage ==================
+chips(); refreshKey(); loadCamp(); ui();
+</script>
+</body>
+</html>

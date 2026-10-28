@@ -1,5 +1,9 @@
 # Envoi WhatsApp en masse (WasenderAPI)
 
+**Version page web (GitHub Pages)** : `index.html` à la racine, tout tourne dans le navigateur. Ouvrez https://anaslaghezali-ops.github.io/wasenderapi/, collez votre clé API (elle reste dans votre navigateur, jamais dans GitHub), et gardez l’onglet ouvert pendant l’envoi.
+
+La version serveur (`server.js`, décrite ci-dessous) reste disponible si vous voulez que l’envoi continue PC éteint.
+
 Plateforme web pour envoyer un message WhatsApp personnalisé à une liste de numéros, via [WasenderAPI](https://wasenderapi.com).
 
 - Import d’un fichier **Excel/CSV** (ou liste collée). Les numéros `06…`/`07…` sont convertis en `+212…`, doublons et numéros invalides retirés.
