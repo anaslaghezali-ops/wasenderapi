@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Envoi WhatsApp</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+
+<!-- Connexion -->
+<section id="login" class="center" hidden>
+  <form id="loginForm" class="card narrow">
+    <h1>Envoi WhatsApp</h1>
+    <p class="muted">Entrez le mot de passe de la plateforme.</p>
+    <input id="password" type="password" placeholder="Mot de passe" autocomplete="current-password" required>
+    <button class="primary" type="submit">Se connecter</button>
+    <p id="loginError" class="error"></p>
+  </form>
+</section>
+
+<!-- Application -->
+<section id="app" hidden>
+  <header class="top">
+    <strong>Envoi WhatsApp</strong>
+    <nav>
+      <button data-tab="new" class="tab active">Nouvelle campagne</button>
+      <button data-tab="list" class="tab">Campagnes</button>
+    </nav>
+    <button id="logout" class="ghost small">Déconnexion</button>
+  </header>
+  <div id="dryBanner" class="banner" hidden>Mode simulation : aucun message n’est réellement envoyé.</div>
+
+  <main>
+    <!-- Nouvelle campagne -->
+    <div id="tab-new">
+      <div class="card">
+        <h2><span class="step">1</span> Contacts</h2>
+        <p class="muted">Fichier Excel ou CSV avec une colonne de numéros (ex : <code>telephone</code>) et, si vous voulez, d’autres colonnes (<code>prenom</code>, <code>ville</code>…). Les numéros <code>06…</code>/<code>07…</code> sont convertis en <code>+212…</code>.</p>
+        <label class="file">
+          <input id="file" type="file" accept=".xlsx,.xls,.csv,.txt">
+          <span>Choisir un fichier</span>
+        </label>
+        <details>
+          <summary>…ou coller une liste</summary>
+          <textarea id="paste" rows="5" placeholder="Un numéro par ligne, éventuellement suivi du prénom :&#10;0612345678;Karim&#10;+212 6 98 76 54 32;Salma"></textarea>
+          <button id="usePaste" class="ghost small" type="button">Utiliser cette liste</button>
+        </details>
+        <div id="contactsInfo" class="info" hidden></div>
+      </div>
+
+      <div class="card">
+        <h2><span class="step">2</span> Message</h2>
+        <div id="varChips" class="chips"></div>
+        <textarea id="template" rows="7" placeholder="{Salut|Bonjour} {prenom} 👋&#10;&#10;Votre message ici…"></textarea>
+        <div class="row between muted small-text">
+          <span>Variables : <code>{prenom}</code> · Variantes au hasard : <code>{Salut|Bonjour|Hello}</code></span>
+          <span id="charCount">0 / 4000</span>
+        </div>
+        <div id="previewBox" class="preview" hidden>
+          <div class="muted small-text">Aperçu (3 premiers contacts)</div>
+          <div id="previews"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="step">3</span> Rythme d’envoi</h2>
+        <p class="muted">Des envois lents et irréguliers réduisent fortement le risque de blocage du numéro.</p>
+        <div class="grid">
+          <label>Pause entre messages (min, s)<input id="minDelay" type="number" min="1" value="10"></label>
+          <label>Pause entre messages (max, s)<input id="maxDelay" type="number" min="1" value="25"></label>
+          <label>Grande pause tous les… messages<input id="batchSize" type="number" min="0" value="40"></label>
+          <label>Durée de la grande pause (min)<input id="batchPauseMin" type="number" min="0" value="5"></label>
+        </div>
+        <p id="estimate" class="muted small-text"></p>
+      </div>
+
+      <div class="card">
+        <h2><span class="step">4</span> Test</h2>
+        <p class="muted">Envoyez-vous le message (avec les infos du 1er contact) avant de lancer.</p>
+        <div class="row">
+          <input id="testPhone" type="tel" placeholder="Votre numéro, ex : 0612345678">
+          <button id="sendTest" class="ghost" type="button">Envoyer le test</button>
+        </div>
+        <p id="testResult" class="small-text"></p>
+      </div>
+
+      <div class="card">
+        <h2><span class="step">5</span> Lancer</h2>
+        <input id="campaignName" type="text" placeholder="Nom de la campagne (optionnel)">
+        <button id="launch" class="primary big" type="button" disabled>Lancer la campagne</button>
+        <p id="launchError" class="error"></p>
+      </div>
+    </div>
+
+    <!-- Liste des campagnes -->
+    <div id="tab-list" hidden>
+      <div id="campaigns"></div>
+    </div>
+  </main>
+</section>
+
+<!-- Détail d'une campagne -->
+<dialog id="detail">
+  <div class="row between">
+    <h2 id="detailTitle"></h2>
+    <button class="ghost small" onclick="document.getElementById('detail').close()">Fermer</button>
+  </div>
+  <div class="row filters">
+    <select id="detailFilter">
+      <option value="">Tous</option>
+      <option value="sent">Envoyés</option>
+      <option value="failed">Échecs</option>
+      <option value="pending">En attente</option>
+    </select>
+  </div>
+  <div class="table-wrap"><table id="detailTable"></table></div>
+</dialog>
+
+</body>
+</html>

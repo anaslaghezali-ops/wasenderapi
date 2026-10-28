@@ -1,0 +1,17 @@
+{
+  "name": "wasender-bulk",
+  "version": "1.0.0",
+  "description": "Plateforme d'envoi WhatsApp en masse via WasenderAPI",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "test": "node tests/run.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
