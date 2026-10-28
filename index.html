@@ -236,7 +236,8 @@ async function sendText(to, text) {
   const msg = body?.message || body?.error || (body?.errors ? JSON.stringify(body.errors) : '') || 'HTTP ' + res.status;
   if (res.status === 429) {
     const h = Number(res.headers.get('retry-after')), b = Number(body?.retry_after ?? body?.retryAfter);
-    throw Object.assign(new Error('Limite de débit (429)'), { status: 429, retryAfter: h > 0 ? h : b > 0 ? b : 60 });
+    const known = h > 0 || b > 0;
+    throw Object.assign(new Error(msg), { status: 429, retryAfter: h > 0 ? h : b > 0 ? b : 60, known });
   }
   if (res.status === 401 || res.status === 403)
     throw Object.assign(new Error(`Accès refusé (${res.status}) : clé API invalide ou session WhatsApp déconnectée. ${msg}`), { status: res.status, fatal: true });
@@ -460,7 +461,7 @@ async function loop() {
         outcome = 'sent';
       } catch (e) {
         if (e.status === 429) {
-          camp.lastError = `Limite de débit atteinte, reprise dans ${e.retryAfter} s.`;
+          camp.lastError = `Limite de débit WasenderAPI (429), reprise dans ${e.retryAfter} s${e.known ? '' : ' (délai par défaut)'}. Réponse de WasenderAPI : « ${e.message} »`;
           camp.nextAt = Date.now() + e.retryAfter * 1000; saveCamp(); ui();
           await sleep(e.retryAfter * 1000); camp.lastError = null; continue;
         }
